@@ -8,6 +8,7 @@ import {
   transformDivider,
   transformHeading,
   transformOrdered,
+  transformQuoteContainer,
   transformText,
 transformTodo,
 } from './parser';
@@ -103,6 +104,8 @@ export class LarkDocs2Md {
         return transformTodo(block, context);
       case BlockType.Divider:
         return transformDivider(block, context);
+      case BlockType.QuoteContainer:
+        return transformQuoteContainer(block, context);
       default:
         return '';
     }

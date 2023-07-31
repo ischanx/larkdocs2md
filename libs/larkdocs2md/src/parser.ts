@@ -81,3 +81,20 @@ export const transformTodo = (block: DocBlock, context: TransformContext) => {
 export const transformDivider = (block: DocBlock, context: TransformContext) => {
   return `---`;
 }
+
+/** 
+ * 输出 Markdown 格式的引用
+ */
+export const transformQuoteContainer = (block: DocBlock, context: TransformContext) => {
+  const { blocksMap } = context;
+  let quotes = "";
+  if(block.children.length){
+    block.children.forEach((token: string) => {
+      const child = blocksMap.get(token);
+      const content = transformText(child, context);
+      quotes += `> ${content}\n`;
+    })
+  }
+
+  return quotes;
+}
