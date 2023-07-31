@@ -5,7 +5,7 @@ import { getBlockData } from "./utils";
 /** 
  * 输出 Markdown 格式的文本
  */
-export const transformText = (block: DocBlock, context?: TransformContext) => {
+export const transformText = (block: DocBlock, context: TransformContext) => {
   const blockData = getBlockData(block);
   return blockData.elements[0].text_run.content;
 }
@@ -13,7 +13,7 @@ export const transformText = (block: DocBlock, context?: TransformContext) => {
 /** 
  * 输出 Markdown 格式的多级标题
  */
-export const transformHeading = (block: DocBlock, context?: TransformContext) => {
+export const transformHeading = (block: DocBlock, context: TransformContext) => {
   const levels = [
     BlockType.Heading1,
     BlockType.Heading2,
@@ -35,7 +35,31 @@ export const transformHeading = (block: DocBlock, context?: TransformContext) =>
 /** 
  * 输出 Markdown 格式的无序列表
  */
-export const transformBullet = (block: DocBlock, context?: TransformContext) => {
+export const transformBullet = (block: DocBlock, context: TransformContext) => {
   const content = transformText(block, context);
   return `- ${content}`;
+}
+
+/** 
+ * 输出 Markdown 格式的有序列表
+ */
+export const transformOrdered = (block: DocBlock, context: TransformContext) => {
+  let order = 1;
+  const { blocksMap, blocksList } = context;
+  const index = blocksList.indexOf(block.block_id);
+  const content = transformText(block, context);
+  
+  if(index >= 0){
+    // 识别连续的编号
+    for(let i = index - 1;i >= 0; i--){
+      const lastBlock = blocksMap.get(blocksList[i]);
+      if(lastBlock.block_type === BlockType.Ordered){
+        order++;
+      }else{
+        break;
+      }
+    }
+  }
+
+  return `${order}. ${content}`;
 }

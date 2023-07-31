@@ -6,6 +6,7 @@ import { BlockType, DocBlock } from './types';
 import { 
   transformBullet,
   transformHeading,
+  transformOrdered,
   transformText,
 } from './parser';
 
@@ -23,6 +24,7 @@ export interface GlobalConfig extends OutputConfig {
 
 export interface TransformContext {
   blocksMap: Map<string, DocBlock>;
+  blocksList: string[];
 }
 
 export class LarkDocs2Md {
@@ -61,11 +63,11 @@ export class LarkDocs2Md {
     //   },
     // });
     let t = '';
-    const blockList = getBlockList.data.items[0].children;
+    const blocksList = getBlockList.data.items[0].children;
     const blocksMap = this.buildBlocksMap(getBlockList.data.items);
-    blockList?.forEach(blockToken => {
+    blocksList?.forEach(blockToken => {
       const block = blocksMap.get(blockToken);
-      const text = this.transform(block, { blocksMap });
+      const text = this.transform(block, { blocksMap, blocksList });
       if(text){
         t += text + '\n'
       }
@@ -93,6 +95,8 @@ export class LarkDocs2Md {
         return transformHeading(block, context);
       case BlockType.Bullet:
         return transformBullet(block, context);
+      case BlockType.Ordered:
+        return transformOrdered(block, context);
       default:
         return '';
     }
