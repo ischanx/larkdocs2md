@@ -74,3 +74,10 @@ export const transformTodo = (block: DocBlock, context: TransformContext) => {
   const content = transformText(block, context);
   return `${prefix} ${content}`;
 }
+
+/** 
+ * 输出 Markdown 格式的分割线
+ */
+export const transformDivider = (block: DocBlock, context: TransformContext) => {
+  return `---`;
+}
