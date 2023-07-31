@@ -15,8 +15,11 @@ export interface OutputConfig {
 export interface GlobalConfig extends OutputConfig {
   appId: string;
   appSecret: string;
-
 } 
+
+export interface TransformContext {
+  blocksMap: Map<string, DocBlock>;
+}
 
 export class LarkDocs2Md {
   private larkClient: Client | undefined;
@@ -30,6 +33,14 @@ export class LarkDocs2Md {
     //   appSecret: this.globalConfig.appSecret,
     //   disableTokenCache: false, // SDK会自动管理租户token
     // });
+  }
+
+  buildBlocksMap(blocks: DocBlock[]){
+    const blocksMap = new Map();
+    blocks.forEach(block => {
+      blocksMap.set(block.block_id, block);
+    });
+    return blocksMap;
   }
 
   generateMarkdown(url: string, config?: Partial<OutputConfig>){
@@ -46,9 +57,11 @@ export class LarkDocs2Md {
     //   },
     // });
     let t = '';
-    const blockList = getBlockList.data.items;
-    blockList.forEach(block => {
-      const text = this.transform(block);
+    const blockList = getBlockList.data.items[0].children;
+    const blocksMap = this.buildBlocksMap(getBlockList.data.items);
+    blockList?.forEach(blockToken => {
+      const block = blocksMap.get(blockToken);
+      const text = this.transform(block, { blocksMap });
       if(text){
         t += text + '\n'
       }
@@ -59,11 +72,11 @@ export class LarkDocs2Md {
   }
 
 
-  transform(block: DocBlock){
+  transform(block: DocBlock, context: TransformContext){
     const { block_type: blockType } = block;
     switch(blockType){
       case BlockType.Text:
-        return transformText(block);
+        return transformText(block, context);
       case BlockType.Heading1:
       case BlockType.Heading2:
       case BlockType.Heading3:
@@ -73,7 +86,7 @@ export class LarkDocs2Md {
       case BlockType.Heading7:
       case BlockType.Heading8:
       case BlockType.Heading9:
-        return transformHeading(block);
+        return transformHeading(block, context);
       default:
         return '';
     }
