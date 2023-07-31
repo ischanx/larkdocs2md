@@ -48,7 +48,7 @@ export const transformOrdered = (block: DocBlock, context: TransformContext) => 
   const { blocksMap, blocksList } = context;
   const index = blocksList.indexOf(block.block_id);
   const content = transformText(block, context);
-  
+
   if(index >= 0){
     // 识别连续的编号
     for(let i = index - 1;i >= 0; i--){
@@ -62,4 +62,15 @@ export const transformOrdered = (block: DocBlock, context: TransformContext) => 
   }
 
   return `${order}. ${content}`;
+}
+
+/** 
+ * 输出 Markdown 格式的待办列表
+ */
+export const transformTodo = (block: DocBlock, context: TransformContext) => {
+  const blockData = getBlockData(block);
+  const isDone = !!blockData.style.done;
+  const prefix = `- [${isDone ? 'x' : ' '}]`;
+  const content = transformText(block, context);
+  return `${prefix} ${content}`;
 }

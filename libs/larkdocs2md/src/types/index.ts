@@ -36,7 +36,7 @@ export enum BlockType{
   /** 引用 */
   Quote = 15,
   /** 待办 */
-  todo = 17,
+  Todo = 17,
   /** 多维表格 */
   Bitable = 18,
   /** 高亮块 */

@@ -8,6 +8,7 @@ import {
   transformHeading,
   transformOrdered,
   transformText,
+transformTodo,
 } from './parser';
 
 export interface OutputConfig {
@@ -97,6 +98,8 @@ export class LarkDocs2Md {
         return transformBullet(block, context);
       case BlockType.Ordered:
         return transformOrdered(block, context);
+      case BlockType.Todo:
+        return transformTodo(block, context);
       default:
         return '';
     }

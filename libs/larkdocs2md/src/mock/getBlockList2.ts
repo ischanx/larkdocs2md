@@ -708,7 +708,7 @@ export default {
           ],
           "style": {
             "align": 1,
-            "done": false,
+            "done": true,
             "folded": false
           }
         }
