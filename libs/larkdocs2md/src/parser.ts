@@ -31,3 +31,11 @@ export const transformHeading = (block: DocBlock, context?: TransformContext) =>
   const content = transformText(block, context);
   return `${prefix} ${content}`;
 }
+
+/** 
+ * 输出 Markdown 格式的无序列表
+ */
+export const transformBullet = (block: DocBlock, context?: TransformContext) => {
+  const content = transformText(block, context);
+  return `- ${content}`;
+}

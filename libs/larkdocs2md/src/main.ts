@@ -3,7 +3,11 @@ import { Client as LarkClient } from '@larksuiteoapi/node-sdk';
 import { getDocumentTokenFromUrl } from './utils';
 import getBlockList from './mock/getBlockList2';
 import { BlockType, DocBlock } from './types';
-import { transformHeading, transformText } from './parser';
+import { 
+  transformBullet,
+  transformHeading,
+  transformText,
+} from './parser';
 
 export interface OutputConfig {
   outputDir?: string;
@@ -87,6 +91,8 @@ export class LarkDocs2Md {
       case BlockType.Heading8:
       case BlockType.Heading9:
         return transformHeading(block, context);
+      case BlockType.Bullet:
+        return transformBullet(block, context);
       default:
         return '';
     }
