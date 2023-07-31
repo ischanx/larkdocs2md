@@ -90,3 +90,21 @@ export enum BlockType{
   /** 未支持的，只支持读，不支持写 */
   Unknown = 99,
 }
+
+export interface TextElementStyle {
+  bold: boolean;
+  inline_code: boolean;
+  italic: boolean;
+  strikethrough: boolean;
+  underline: boolean;
+}
+
+export interface TextRun {
+  content: string;
+  text_element_style: TextElementStyle;
+}
+
+export interface TextElement {
+  text_run: TextRun;
+}
+

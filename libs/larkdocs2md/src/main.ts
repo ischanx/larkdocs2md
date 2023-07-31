@@ -5,6 +5,7 @@ import getBlockList from './mock/getBlockList2';
 import { BlockType, DocBlock } from './types';
 import { 
   transformBullet,
+  transformCode,
   transformDivider,
   transformHeading,
   transformOrdered,
@@ -106,6 +107,8 @@ export class LarkDocs2Md {
         return transformDivider(block, context);
       case BlockType.QuoteContainer:
         return transformQuoteContainer(block, context);
+      case BlockType.Code:
+        return transformCode(block, context);
       default:
         return '';
     }

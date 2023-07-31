@@ -1,13 +1,39 @@
 import { TransformContext } from "./main";
-import { BlockType, DocBlock } from "./types";
-import { getBlockData } from "./utils";
+import { BlockType, DocBlock, TextElement } from "./types";
+import { CodeLanguage } from "./types/code";
+import { getBlockData, isInlineCodeElement } from "./utils";
 
 /** 
  * 输出 Markdown 格式的文本
  */
 export const transformText = (block: DocBlock, context: TransformContext) => {
+  let content = "";
   const blockData = getBlockData(block);
-  return blockData.elements[0].text_run.content;
+  const elements = blockData.elements;
+
+  for(let i = 0;i < elements.length; i++){
+    const item = elements[i];
+    let currentText = item.text_run.content;
+
+    if(isInlineCodeElement(item)){
+      // inline code
+      let j = i + 1;
+      while(j < elements.length){
+        if(isInlineCodeElement(elements[j])){
+          currentText += elements[j].text_run.content;
+          i++;
+        } else {
+          break;
+        }
+        j++;
+      }
+      currentText = `\`${currentText}\``;
+    }
+
+    content += currentText;
+  }
+
+  return content;
 }
 
 /** 
@@ -97,4 +123,17 @@ export const transformQuoteContainer = (block: DocBlock, context: TransformConte
   }
 
   return quotes;
+}
+
+/** 
+ * 输出 Markdown 格式的代码块
+ */
+export const transformCode = (block: DocBlock, context: TransformContext) => {
+  let content = '';
+  const blockData = getBlockData(block);
+  const elements = blockData.elements;
+  const language = CodeLanguage[blockData.style.language].toLocaleLowerCase();
+  elements.forEach((item: TextElement) => content += item.text_run.content);
+
+  return `\`\`\`${language}\n${content}\n\`\`\`\``;
 }

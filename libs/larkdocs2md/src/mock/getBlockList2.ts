@@ -27,6 +27,8 @@ export default {
           "F3fsd4KHRoEg66xXH5wcxV8rnSe",
           "AHZvdChQyoAwykx6PEIcbL1lnIY",
           "LmMHdG3cYoTCxpxQ1Kmc6Govn2d",
+          "GFdkd96nwog4dvx5tjJcIgIpnrb",
+          "V6F5dFhdFoGBtsxgo0Bc2670nMb",
           "KxegdOqxpo14IKxuLaCcIdzhnGh",
           "I3FrdksJ1oCbKLxVgBicMtnEntb",
           "AP5SdmPjSo4GxExEkcIckC6uncf",
@@ -569,13 +571,99 @@ export default {
         "parent_id": "PEsbdeokWoIoNOx3DTxc6w2ynMd"
       },
       {
+        "block_id": "GFdkd96nwog4dvx5tjJcIgIpnrb",
+        "block_type": 2,
+        "parent_id": "PEsbdeokWoIoNOx3DTxc6w2ynMd",
+        "text": {
+          "elements": [
+            {
+              "text_run": {
+                "content": "",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": false,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            }
+          ],
+          "style": {
+            "align": 1,
+            "folded": false
+          }
+        }
+      },
+      {
+        "block_id": "V6F5dFhdFoGBtsxgo0Bc2670nMb",
+        "block_type": 2,
+        "parent_id": "PEsbdeokWoIoNOx3DTxc6w2ynMd",
+        "text": {
+          "elements": [
+            {
+              "text_run": {
+                "content": "con",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": true,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            },
+            {
+              "text_run": {
+                "content": "sole",
+                "text_element_style": {
+                  "bold": true,
+                  "inline_code": true,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            },
+            {
+              "text_run": {
+                "content": ".log(123)",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": true,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            }
+          ],
+          "style": {
+            "align": 1,
+            "folded": false
+          }
+        }
+      },
+      {
         "block_id": "KxegdOqxpo14IKxuLaCcIdzhnGh",
         "block_type": 14,
         "code": {
           "elements": [
             {
               "text_run": {
-                "content": "console.log(123);",
+                "content": "console.log(123);\n\n",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": false,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            },
+            {
+              "text_run": {
+                "content": "console.log(456);",
                 "text_element_style": {
                   "bold": false,
                   "inline_code": false,
