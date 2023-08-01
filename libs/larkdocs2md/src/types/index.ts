@@ -97,7 +97,12 @@ export interface TextElementStyle {
   italic: boolean;
   strikethrough: boolean;
   underline: boolean;
+  link?: {
+    url: string;
+  }
 }
+
+export type TextElementStyleKey = keyof TextElementStyle;
 
 export interface TextRun {
   content: string;
@@ -108,3 +113,15 @@ export interface TextElement {
   text_run: TextRun;
 }
 
+export const TEXT_MARK = {
+  /** 粗体 */
+  bold: ['**', '**'],
+  /** 斜体 */
+  italic: ['*', '*'],
+  /** 删除线 */
+  strikethrough: ['~~', '~~'],
+  /** 下划线 */
+  underline: ['<u>', '</u>'],
+  /** 行内代码 */
+  inline_code: ['`', '`'],
+}

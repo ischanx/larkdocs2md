@@ -1,7 +1,7 @@
 import { TransformContext } from "./main";
-import { BlockType, DocBlock, TextElement } from "./types";
+import { BlockType, DocBlock, TextElement, TextElementStyle, TextElementStyleKey } from "./types";
 import { CodeLanguage } from "./types/code";
-import { getBlockData, isInlineCodeElement } from "./utils";
+import { computeMarkdownTagText, findSequenceElements, getBlockData, isInlineCodeElement, isLinkElement } from "./utils";
 
 /** 
  * 输出 Markdown 格式的文本
@@ -11,29 +11,59 @@ export const transformText = (block: DocBlock, context: TransformContext) => {
   const blockData = getBlockData(block);
   const elements = blockData.elements;
 
-  for(let i = 0;i < elements.length; i++){
-    const item = elements[i];
-    let currentText = item.text_run.content;
-
-    if(isInlineCodeElement(item)){
-      // inline code
-      let j = i + 1;
-      while(j < elements.length){
-        if(isInlineCodeElement(elements[j])){
-          currentText += elements[j].text_run.content;
-          i++;
-        } else {
-          break;
-        }
-        j++;
-      }
-      currentText = `\`${currentText}\``;
-    }
-
-    content += currentText;
+  const tagState: TextElementStyle = {
+    bold: false,
+    italic: false,
+    strikethrough: false,
+    underline: false,
+    inline_code: false,
   }
 
-  return content;
+  for(let i = 0;i < elements.length; i++){
+    const item = elements[i];
+    let currentText = '';
+    let prefix = '';
+    let postfix = '';
+
+    if(isInlineCodeElement(item)){
+      // 结束原有标记，inline code不支持内部BIUS
+      prefix = computeMarkdownTagText(tagState);
+      // 同一个行内代码
+      const targets = findSequenceElements(i, isInlineCodeElement, elements);
+      targets.forEach(element => {
+        currentText += element.text_run.content;
+      })
+      i += targets.length - 1;
+      prefix += '`';
+      postfix += '`';
+    }else if(isLinkElement(item)){
+      // 结束原有标记
+      prefix = computeMarkdownTagText(tagState);
+      const link = item.text_run.text_element_style.link.url;
+      const targets = findSequenceElements(i, isLinkElement, elements);
+      targets.forEach(element => {
+        // 链接文本内出现的新标记
+        currentText += computeMarkdownTagText(tagState, element.text_run.text_element_style);
+        currentText += element.text_run.content;
+      });
+      // 结束链接文本内出现的新标记
+      currentText += computeMarkdownTagText(tagState);
+      i += targets.length - 1;
+      prefix += '[';
+      postfix += `](${link})`;
+    }else {
+      prefix = computeMarkdownTagText(tagState, item.text_run.text_element_style);
+      currentText = item.text_run.content;
+    }
+
+
+    content += prefix + currentText + postfix;
+  }
+
+  // closing tag
+  const postfix = computeMarkdownTagText(tagState);
+
+  return content + postfix;
 }
 
 /** 
