@@ -1,6 +1,6 @@
 import type { Client } from '@larksuiteoapi/node-sdk';
 import { Client as LarkClient } from '@larksuiteoapi/node-sdk';
-import { getDocumentTokenFromUrl } from './utils';
+import { getBlockData, getDocumentTokenFromUrl, sanitizeFilename } from './utils';
 import getBlockList from './mock/getBlockList2';
 import { BlockType, DocBlock } from './types';
 import { 
@@ -8,41 +8,82 @@ import {
   transformCode,
   transformDivider,
   transformHeading,
+  transformImage,
   transformOrdered,
   transformQuoteContainer,
   transformText,
 transformTodo,
 } from './parser';
-
+import path from 'path';
+import { createWriteStream, existsSync } from 'fs';
+import { mkdir } from 'fs/promises';
 export interface OutputConfig {
-  outputDir?: string;
-  staticDir?: string;
-  titleAsFileName?: boolean;
-  staticAsUrl?: boolean;
+  /** 输出的方式，默认为false生成本地文件 */
+  isTextMode: boolean;
+  /** 输出的本地绝对路径 */
+  basePath: string;
+  /** 输出Markdown文件，基于basePath的相对路径 */
+  outputDir: string;
+  /** 输出Markdown文件，基于basePath的相对路径 */
+  staticDir: string;
+  /** 输出文件用文档标题作为文件名，默认为false用token做文件名 */
+  titleAsFileName: boolean;
+  /**
+   * 图片插入的方式：
+   * true则使用临时URL，24小时（isTextMode为真时必定为true）
+   * 
+   * false则下载到staticDir指定的路径
+   * 
+   * https://open.feishu.cn/document/server-docs/docs/drive-v1/media/batch_get_tmp_download_url
+   */
+  staticAsUrl: boolean;
 }
 
-export interface GlobalConfig extends OutputConfig {
+
+
+export type GlobalConfig = {
   appId: string;
   appSecret: string;
-} 
+} & Partial<OutputConfig>;
+
+export type TransformContextConfig = OutputConfig & {
+  staticPath: string;
+  outputPath: string;
+};
 
 export interface TransformContext {
   blocksMap: Map<string, DocBlock>;
   blocksList: string[];
+  larkClient: Client;
+  config: TransformContextConfig;
 }
 
 export class LarkDocs2Md {
-  private larkClient: Client | undefined;
+  private larkClient: Client;
 
-  private globalConfig: GlobalConfig;
+  private globalConfig: TransformContextConfig;
 
   constructor(config: GlobalConfig){
-    this.globalConfig = config;
-    // this.larkClient = new LarkClient({
-    //   appId: this.globalConfig.appId,
-    //   appSecret: this.globalConfig.appSecret,
-    //   disableTokenCache: false, // SDK会自动管理租户token
-    // });
+    const defaultOutputConfig: OutputConfig = {
+      isTextMode: false,
+      basePath: __dirname,
+      outputDir: './',
+      staticDir: './static',
+      titleAsFileName: false,
+      staticAsUrl: false,
+    };
+    this.globalConfig = {
+      ...defaultOutputConfig,
+      ...config,
+      staticPath: '',
+      outputPath: '',
+    };
+
+    this.larkClient = new LarkClient({
+      appId: config.appId,
+      appSecret: config.appSecret,
+      disableTokenCache: false, // SDK会自动管理租户token
+    });
   }
 
   buildBlocksMap(blocks: DocBlock[]){
@@ -53,36 +94,88 @@ export class LarkDocs2Md {
     return blocksMap;
   }
 
-  generateMarkdown(url: string, config?: Partial<OutputConfig>){
-    console.log(url, config)
-    // const pageToken = getDocumentTokenFromUrl(url);
+  async generateMarkdown(url: string, config?: Partial<OutputConfig>){
+    const mergedConfig = {
+      ...this.globalConfig,
+      ...config,
+    };
+    console.log(`[larkdocs2md] ${mergedConfig}`);
 
-    // this.larkClient.docx.documentBlock.list({
-    //   path: {
-    //     document_id: pageToken,
-    //   },
-    //   params: {
-    //     page_size: 500,
-    //     document_revision_id: -1,
-    //   },
-    // });
-    let t = '';
-    const blocksList = getBlockList.data.items[0].children;
-    const blocksMap = this.buildBlocksMap(getBlockList.data.items);
-    blocksList?.forEach(blockToken => {
-      const block = blocksMap.get(blockToken);
-      const text = this.transform(block, { blocksMap, blocksList });
-      if(text){
-        t += text + '\n'
-      }
-
+    const docToken = getDocumentTokenFromUrl(url);
+    console.log(`[larkdocs2md] 获取文档数据中...`);
+    const response = await this.larkClient.docx.documentBlock.list({
+      path: {
+        document_id: docToken,
+      },
+      params: {
+        page_size: 500,
+        document_revision_id: -1,
+      },
     });
-    console.log(t);
+    if(!response?.data?.items?.[0]){
+      throw new Error('get blocks list error');
+    }
+    console.log(`[larkdocs2md] 开始解析文档数据...`);
+    const pageBlock = response.data.items[0];
+    const pageBlockData = getBlockData(pageBlock);
+    if(pageBlock.block_type !== BlockType.Page){
+      throw new Error('no page block');
+    }
 
+    const blocksList = pageBlock.children;
+    const blocksMap = this.buildBlocksMap(response.data.items);
+    if(!blocksList?.length){
+      return;
+    }
+    const context: TransformContext = { 
+      blocksMap,
+      blocksList,
+      larkClient: this.larkClient,
+      config: mergedConfig,
+    };
+    if(mergedConfig.isTextMode){
+      // 输出纯文本
+      let markdownString = '';
+      for(let blockToken of blocksList){
+        const block = blocksMap.get(blockToken);
+        const text = await this.transform(block, context);
+        if(text){
+          markdownString += text + '\n';
+        }
+      }
+      return markdownString;
+    }else{
+      // 生成本地文件
+      const staticPath =  path.resolve(mergedConfig.basePath, mergedConfig.staticDir);
+      const outputPath = path.resolve(mergedConfig.basePath, mergedConfig.outputDir);
+      context.config.staticPath = staticPath;
+      context.config.outputPath = outputPath;
+      
+      if(!existsSync(staticPath)){
+        await mkdir(staticPath);
+      }
+      const docTitle = pageBlockData.elements[0].text_run.content;
+      const fileName = `${mergedConfig.titleAsFileName && docTitle ? sanitizeFilename(docTitle) : docToken}.md`;
+      const markdownFilePath = path.resolve(outputPath, fileName);
+      const writeStream = createWriteStream(markdownFilePath, {
+        encoding: 'utf-8',
+      });
+      console.log("[larkdocs2md] 生成文件"+ markdownFilePath);
+
+      for(let blockToken of blocksList){
+        const block = blocksMap.get(blockToken);
+        const text = await this.transform(block, context);
+        if(text){
+          writeStream.write(text + '\n')
+        }
+      }
+      writeStream.close();
+      return '';
+    }
   }
 
 
-  transform(block: DocBlock, context: TransformContext){
+  async transform(block: DocBlock, context: TransformContext){
     const { block_type: blockType } = block;
     switch(blockType){
       case BlockType.Text:
@@ -109,6 +202,8 @@ export class LarkDocs2Md {
         return transformQuoteContainer(block, context);
       case BlockType.Code:
         return transformCode(block, context);
+      case BlockType.Image:
+        return transformImage(block, context);
       default:
         return '';
     }

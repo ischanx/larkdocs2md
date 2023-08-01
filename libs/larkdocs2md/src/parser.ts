@@ -1,3 +1,4 @@
+import path from "path";
 import { TransformContext } from "./main";
 import { BlockType, DocBlock, TextElement, TextElementStyle, TextElementStyleKey } from "./types";
 import { CodeLanguage } from "./types/code";
@@ -172,4 +173,41 @@ export const transformCode = (block: DocBlock, context: TransformContext) => {
   elements.forEach((item: TextElement) => content += item.text_run.content);
 
   return `\`\`\`${language}\n${content}\n\`\`\`\``;
+}
+
+/** 
+ * 输出 Markdown 格式的图片（临时链接或者本地文件）
+ */
+export const transformImage = async (block: DocBlock, context: TransformContext) => {
+  const { config, larkClient } = context;
+  const { staticAsUrl, staticPath, isTextMode, basePath } = config;
+  const blockData = getBlockData(block);
+  const { token } = blockData;
+
+  if(isTextMode || staticAsUrl){
+    const response = await larkClient.drive.media.batchGetTmpDownloadUrl({
+      params: {
+        file_tokens: token,
+      }
+    });
+    const url = response?.data?.tmp_download_urls?.[0]?.tmp_download_url;
+    return `![${token}](${url})`;
+  }else{
+    if(!staticPath){
+      throw new Error('no static path');
+    }
+
+    const response = await larkClient.drive.media.download({
+      path: {
+        file_token: token,
+      }
+    });
+
+    const filePath = path.resolve(staticPath, `${token}.jpg`);
+    const relativePath = filePath.replace(basePath, '');
+    await response.writeFile(filePath);
+    console.log("[larkdocs2md] 生成文件"+ filePath);
+    return `![${token}](${relativePath})`;
+  }
+
 }

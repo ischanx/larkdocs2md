@@ -9,7 +9,6 @@ export const getDocumentTokenFromUrl = (url: string) => {
   }
 }
 
-
 export const getBlockData = (block: DocBlock) => {
   const key = BlockType[block.block_type].toLowerCase();
   return block[key];
@@ -74,4 +73,10 @@ export const computeMarkdownTagText = (tagStatus: TextElementStyle, cur?: TextEl
     tagStatus[key] = newVal;
   });
   return closingTags + openingTags;
+}
+
+
+/** 用于删除文件名中的非法字符的函数 */
+export const sanitizeFilename = (filename: string) => {
+  return filename.replace(/[\\/:"*?<>|]/g, '_');
 }

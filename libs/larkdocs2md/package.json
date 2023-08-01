@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
-    "preview": "tsc && node ./dist/test.js"
+    "preview": "tsc && node ./demo/run.js"
   },
   "devDependencies": {
     "typescript": "^5.0.2"
