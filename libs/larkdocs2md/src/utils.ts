@@ -17,11 +17,15 @@ export const getBlockData = (block: DocBlock) => {
 
 
 export const isInlineCodeElement = (element: TextElement) => {
-  return element.text_run.text_element_style.inline_code;
+  return element?.text_run?.text_element_style.inline_code;
 }
 
 export const isLinkElement = (element: TextElement) => {
-  return !!element.text_run.text_element_style.link;
+  return !!element?.text_run?.text_element_style.link;
+}
+
+export const isEquationElement = (element: TextElement) => {
+  return !!element?.equation;
 }
 
 export const findSequenceElements = (startIndex: number, fn: (element: TextElement) => boolean, elements: TextElement[]) =>{

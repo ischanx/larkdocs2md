@@ -1,7 +1,7 @@
 import { TransformContext } from "./main";
 import { BlockType, DocBlock, TextElement, TextElementStyle, TextElementStyleKey } from "./types";
 import { CodeLanguage } from "./types/code";
-import { computeMarkdownTagText, findSequenceElements, getBlockData, isInlineCodeElement, isLinkElement } from "./utils";
+import { computeMarkdownTagText, findSequenceElements, getBlockData, isEquationElement, isInlineCodeElement, isLinkElement } from "./utils";
 
 /** 
  * 输出 Markdown 格式的文本
@@ -51,6 +51,12 @@ export const transformText = (block: DocBlock, context: TransformContext) => {
       i += targets.length - 1;
       prefix += '[';
       postfix += `](${link})`;
+    }else if(isEquationElement(item)){
+      // 结束原有标记
+      prefix = computeMarkdownTagText(tagState);
+      prefix += '$$';
+      postfix += '$$';
+      currentText = item.equation.content;
     }else {
       prefix = computeMarkdownTagText(tagState, item.text_run.text_element_style);
       currentText = item.text_run.content;

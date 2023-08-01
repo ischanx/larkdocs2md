@@ -109,8 +109,14 @@ export interface TextRun {
   text_element_style: TextElementStyle;
 }
 
+export interface Equation {
+  content: string;
+  text_element_style: TextElementStyle;
+}
+
 export interface TextElement {
   text_run: TextRun;
+  equation?: Equation;
 }
 
 export const TEXT_MARK = {

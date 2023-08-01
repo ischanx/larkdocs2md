@@ -2055,7 +2055,19 @@ export default {
           "elements": [
             {
               "text_run": {
-                "content": "",
+                "content": "公式 ",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": false,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            },
+            {
+              "equation": {
+                "content": "x^2",
                 "text_element_style": {
                   "bold": false,
                   "inline_code": false,
