@@ -13,7 +13,7 @@ import {
   transformQuoteContainer,
   transformQuote,
   transformText,
-transformTodo,
+  transformTodo,
 } from './parser';
 import path from 'path';
 import { createWriteStream, existsSync } from 'fs';
@@ -125,6 +125,7 @@ export class LarkDocs2Md {
 
     const blocksList = pageBlock.children;
     const blocksMap = this.buildBlocksMap(response.data.items);
+    const docTitle = pageBlockData.elements[0].text_run.content;
     if(!blocksList?.length){
       return;
     }
@@ -137,6 +138,7 @@ export class LarkDocs2Md {
     if(mergedConfig.isTextMode){
       // 输出纯文本
       let markdownString = '';
+      markdownString += `# ${docTitle}\n\n`;
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
         const text = await this.transform(block, context);
@@ -155,7 +157,7 @@ export class LarkDocs2Md {
       if(!existsSync(staticPath)){
         await mkdir(staticPath);
       }
-      const docTitle = pageBlockData.elements[0].text_run.content;
+
       const fileName = `${mergedConfig.titleAsFileName && docTitle ? sanitizeFilename(docTitle) : docToken}.md`;
       const markdownFilePath = path.resolve(outputPath, fileName);
       const writeStream = createWriteStream(markdownFilePath, {
@@ -163,6 +165,7 @@ export class LarkDocs2Md {
       });
       console.log("[larkdocs2md] 生成文件"+ markdownFilePath);
 
+      writeStream.write(`# ${docTitle}\n\n`);
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
         const text = await this.transform(block, context);
