@@ -51,7 +51,7 @@ export const transformText = (block: DocBlock, context: TransformContext) => {
       currentText += computeMarkdownTagText(tagState);
       i += targets.length - 1;
       prefix += '[';
-      postfix += `](${link})`;
+      postfix += `](${decodeURIComponent(link)})`;
     }else if(isEquationElement(item)){
       // 结束原有标记
       prefix = computeMarkdownTagText(tagState);
