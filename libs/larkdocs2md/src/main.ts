@@ -11,6 +11,7 @@ import {
   transformImage,
   transformOrdered,
   transformQuoteContainer,
+  transformQuote,
   transformText,
 transformTodo,
 } from './parser';
@@ -140,7 +141,7 @@ export class LarkDocs2Md {
         const block = blocksMap.get(blockToken);
         const text = await this.transform(block, context);
         if(text){
-          markdownString += text + '\n';
+          markdownString += text + '\n\n';
         }
       }
       return markdownString;
@@ -166,7 +167,7 @@ export class LarkDocs2Md {
         const block = blocksMap.get(blockToken);
         const text = await this.transform(block, context);
         if(text){
-          writeStream.write(text + '\n')
+          writeStream.write(text + '\n\n')
         }
       }
       writeStream.close();
@@ -200,6 +201,8 @@ export class LarkDocs2Md {
         return transformDivider(block, context);
       case BlockType.QuoteContainer:
         return transformQuoteContainer(block, context);
+      case BlockType.Quote:
+        return transformQuote(block, context);
       case BlockType.Code:
         return transformCode(block, context);
       case BlockType.Image:

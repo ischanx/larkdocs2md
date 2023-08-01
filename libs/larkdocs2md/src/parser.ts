@@ -162,6 +162,11 @@ export const transformQuoteContainer = (block: DocBlock, context: TransformConte
   return quotes;
 }
 
+export const transformQuote = (block: DocBlock, context: TransformContext) => {
+  const content = transformText(block, context);
+  return `> ${content}`;
+}
+
 /** 
  * 输出 Markdown 格式的代码块
  */
