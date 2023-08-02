@@ -1,7 +1,6 @@
 import type { Client } from '@larksuiteoapi/node-sdk';
 import { Client as LarkClient } from '@larksuiteoapi/node-sdk';
 import { getBlockData, getDocumentTokenFromUrl, sanitizeFilename } from './utils';
-import getBlockList from './mock/getBlockList2';
 import { BlockType, DocBlock } from './types';
 import { 
   transformBullet,
@@ -65,6 +64,7 @@ export class LarkDocs2Md {
   private globalConfig: TransformContextConfig;
 
   constructor(config: GlobalConfig){
+    this.preCheck(config);
     const defaultOutputConfig: OutputConfig = {
       isTextMode: false,
       outputDir: './',
@@ -84,6 +84,16 @@ export class LarkDocs2Md {
       appSecret: config.appSecret,
       disableTokenCache: false, // SDK会自动管理租户token
     });
+  }
+
+  preCheck(config: GlobalConfig){
+    const requireKeys = ['appId', 'appSecret', 'basePath'] as (keyof GlobalConfig)[];
+    for(let i = 0;i < requireKeys.length; i++){
+      const key = requireKeys[i];
+      if(!config[key]){
+        throw new Error(`[larkdocs2md] 传入配置缺少字段 ${key}`);
+      }
+    }
   }
 
   buildBlocksMap(blocks: DocBlock[]){
