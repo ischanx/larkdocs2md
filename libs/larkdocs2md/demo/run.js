@@ -4,6 +4,7 @@ console.log(LarkDocs2Md)
 const client = new LarkDocs2Md({
   appId: '此处填写appId => cli_....',
   appSecret: '此处填写appSecret => ...',
+  basePath: __dirname,
 });
 
 

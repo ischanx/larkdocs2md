@@ -21,8 +21,6 @@ import { mkdir } from 'fs/promises';
 export interface OutputConfig {
   /** 输出的方式，默认为false生成本地文件 */
   isTextMode: boolean;
-  /** 输出的本地绝对路径 */
-  basePath: string;
   /** 输出Markdown文件，基于basePath的相对路径 */
   outputDir: string;
   /** 输出Markdown文件，基于basePath的相对路径 */
@@ -45,11 +43,13 @@ export interface OutputConfig {
 export type GlobalConfig = {
   appId: string;
   appSecret: string;
+  basePath: string;
 } & Partial<OutputConfig>;
 
 export type TransformContextConfig = OutputConfig & {
   staticPath: string;
   outputPath: string;
+  basePath: string;
 };
 
 export interface TransformContext {
@@ -67,7 +67,6 @@ export class LarkDocs2Md {
   constructor(config: GlobalConfig){
     const defaultOutputConfig: OutputConfig = {
       isTextMode: false,
-      basePath: __dirname,
       outputDir: './',
       staticDir: './static',
       titleAsFileName: false,
