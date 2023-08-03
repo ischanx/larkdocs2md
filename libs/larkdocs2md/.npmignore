@@ -1,0 +1,4 @@
+demo/static
+demo/*.md
+node_modules
+src

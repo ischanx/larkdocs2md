@@ -1,18 +1,34 @@
 {
   "name": "larkdocs2md",
-  "private": true,
   "version": "0.0.0",
+  "author": "ischanx<ischanx@foxmail.com>",
+  "repository": "https://github.com/ischanx/larkdocs2md.git",
+  "private": false,
+  "license": "MIT",
   "type": "commonjs",
   "main": "./dist/main.js",
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
-    "preview": "tsc && node ./demo/run.js"
+    "preview": "tsc && node ./demo/run.js",
+    "release": "pnpm build && release-it"
   },
   "devDependencies": {
+    "@release-it/conventional-changelog": "^7.0.0",
+    "release-it": "^16.1.3",
     "typescript": "^5.0.2"
   },
   "dependencies": {
     "@larksuiteoapi/node-sdk": "^1.19.0"
-  }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.com"
+  },
+  "keywords": [
+    "larkdocs2md",
+    "lark",
+    "feishu",
+    "飞书",
+    "markdown"
+  ]
 }
