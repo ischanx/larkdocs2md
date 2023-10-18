@@ -1,5 +1,17 @@
 
 
+# [0.2.0](https://github.com/ischanx/larkdocs2md/compare/0.1.0...0.2.0) (2023-10-18)
+
+
+### Bug Fixes
+
+* **quoto:** fix non-text block in quoto container ([f6c2e1e](https://github.com/ischanx/larkdocs2md/commit/f6c2e1e2e23d5e707d9b8a2f68791779c3e36cc2))
+
+
+### Features
+
+* support long document ([43362e5](https://github.com/ischanx/larkdocs2md/commit/43362e54576b665fc7b557f240b1ac8565d5290a))
+
 # 0.1.0 (2023-08-03)
 
 
