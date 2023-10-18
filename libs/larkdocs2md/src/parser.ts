@@ -148,22 +148,22 @@ export const transformDivider = (block: DocBlock, context: TransformContext) => 
 /** 
  * 输出 Markdown 格式的引用
  */
-export const transformQuoteContainer = (block: DocBlock, context: TransformContext) => {
+export const transformQuoteContainer = async (block: DocBlock, context: TransformContext) => {
   const { blocksMap } = context;
   let quotes = "";
   if(block.children.length){
-    block.children.forEach((token: string) => {
+    for(const token of block.children){
       const child = blocksMap.get(token);
-      const content = transformText(child, context);
+      const content = await transformBlock(child, context);
       quotes += `> ${content}\n`;
-    })
+    }
   }
 
   return quotes;
 }
 
-export const transformQuote = (block: DocBlock, context: TransformContext) => {
-  const content = transformText(block, context);
+export const transformQuote = async (block: DocBlock, context: TransformContext) => {
+  const content = await transformBlock(block, context);
   return `> ${content}`;
 }
 
@@ -215,4 +215,40 @@ export const transformImage = async (block: DocBlock, context: TransformContext)
     return `![${token}](${relativePath})`;
   }
 
+}
+
+export const transformBlock =  async (block: DocBlock, context: TransformContext): Promise<string> => {
+  const { block_type: blockType } = block;
+  switch(blockType){
+    case BlockType.Text:
+      return transformText(block, context);
+    case BlockType.Heading1:
+    case BlockType.Heading2:
+    case BlockType.Heading3:
+    case BlockType.Heading4:
+    case BlockType.Heading5:
+    case BlockType.Heading6:
+    case BlockType.Heading7:
+    case BlockType.Heading8:
+    case BlockType.Heading9:
+      return transformHeading(block, context);
+    case BlockType.Bullet:
+      return transformBullet(block, context);
+    case BlockType.Ordered:
+      return transformOrdered(block, context);
+    case BlockType.Todo:
+      return transformTodo(block, context);
+    case BlockType.Divider:
+      return transformDivider(block, context);
+    case BlockType.QuoteContainer:
+      return transformQuoteContainer(block, context);
+    case BlockType.Quote:
+      return transformQuote(block, context);
+    case BlockType.Code:
+      return transformCode(block, context);
+    case BlockType.Image:
+      return transformImage(block, context);
+    default:
+      return '';
+  }
 }

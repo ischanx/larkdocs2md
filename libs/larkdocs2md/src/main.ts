@@ -2,18 +2,7 @@ import type { Client } from '@larksuiteoapi/node-sdk';
 import { Client as LarkClient } from '@larksuiteoapi/node-sdk';
 import { getBlockData, getDocumentTokenFromUrl, sanitizeFilename } from './utils';
 import { BlockType, DocBlock } from './types';
-import { 
-  transformBullet,
-  transformCode,
-  transformDivider,
-  transformHeading,
-  transformImage,
-  transformOrdered,
-  transformQuoteContainer,
-  transformQuote,
-  transformText,
-  transformTodo,
-} from './parser';
+import { transformBlock } from './parser';
 import path from 'path';
 import { createWriteStream, existsSync } from 'fs';
 import { mkdir } from 'fs/promises';
@@ -150,7 +139,7 @@ export class LarkDocs2Md {
       markdownString += `# ${docTitle}\n\n`;
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
-        const text = await this.transform(block, context);
+        const text = await transformBlock(block, context);
         if(text){
           markdownString += text + '\n\n';
         }
@@ -177,7 +166,7 @@ export class LarkDocs2Md {
       writeStream.write(`# ${docTitle}\n\n`);
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
-        const text = await this.transform(block, context);
+        const text = await transformBlock(block, context);
         if(text){
           writeStream.write(text + '\n\n')
         }
@@ -186,45 +175,6 @@ export class LarkDocs2Md {
       return '';
     }
   }
-
-
-  async transform(block: DocBlock, context: TransformContext){
-    const { block_type: blockType } = block;
-    switch(blockType){
-      case BlockType.Text:
-        return transformText(block, context);
-      case BlockType.Heading1:
-      case BlockType.Heading2:
-      case BlockType.Heading3:
-      case BlockType.Heading4:
-      case BlockType.Heading5:
-      case BlockType.Heading6:
-      case BlockType.Heading7:
-      case BlockType.Heading8:
-      case BlockType.Heading9:
-        return transformHeading(block, context);
-      case BlockType.Bullet:
-        return transformBullet(block, context);
-      case BlockType.Ordered:
-        return transformOrdered(block, context);
-      case BlockType.Todo:
-        return transformTodo(block, context);
-      case BlockType.Divider:
-        return transformDivider(block, context);
-      case BlockType.QuoteContainer:
-        return transformQuoteContainer(block, context);
-      case BlockType.Quote:
-        return transformQuote(block, context);
-      case BlockType.Code:
-        return transformCode(block, context);
-      case BlockType.Image:
-        return transformImage(block, context);
-      default:
-        return '';
-    }
-  }
-
-
 }
 
 
