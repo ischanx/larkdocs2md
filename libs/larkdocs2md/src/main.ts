@@ -85,6 +85,31 @@ export class LarkDocs2Md {
     }
   }
 
+  async fetchAllBlocks(docToken: string){
+    const blocks: DocBlock[] = [];
+    const fetchBlocks = async (docToken: string, pageToken?: string) => {
+      const response = await this.larkClient.docx.documentBlock.list({
+        path: {
+          document_id: docToken,
+        },
+        params: {
+          page_size: 500,
+          document_revision_id: -1,
+          page_token: pageToken,
+        },
+      });
+      if(!response?.data?.items?.[0]){
+        throw new Error('get blocks list error');
+      }
+      blocks.push(...response.data.items);
+      if(response.data.has_more){
+        await fetchBlocks(docToken, response.data.page_token);
+      }
+    }
+    await fetchBlocks(docToken);
+    return blocks;
+  }
+
   buildBlocksMap(blocks: DocBlock[]){
     const blocksMap = new Map();
     blocks.forEach(block => {
@@ -102,27 +127,16 @@ export class LarkDocs2Md {
 
     const docToken = getDocumentTokenFromUrl(url);
     console.log(`[larkdocs2md] 获取文档数据中...`);
-    const response = await this.larkClient.docx.documentBlock.list({
-      path: {
-        document_id: docToken,
-      },
-      params: {
-        page_size: 500,
-        document_revision_id: -1,
-      },
-    });
-    if(!response?.data?.items?.[0]){
-      throw new Error('get blocks list error');
-    }
+    const blocks: DocBlock[] = await this.fetchAllBlocks(docToken);
     console.log(`[larkdocs2md] 开始解析文档数据...`);
-    const pageBlock = response.data.items[0];
+    const pageBlock = blocks[0];
     const pageBlockData = getBlockData(pageBlock);
     if(pageBlock.block_type !== BlockType.Page){
       throw new Error('no page block');
     }
 
     const blocksList = pageBlock.children;
-    const blocksMap = this.buildBlocksMap(response.data.items);
+    const blocksMap = this.buildBlocksMap(blocks);
     const docTitle = pageBlockData.elements[0].text_run.content;
     if(!blocksList?.length){
       return;
@@ -139,6 +153,9 @@ export class LarkDocs2Md {
       markdownString += `# ${docTitle}\n\n`;
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
+        if(!block){
+          console.log(`[larkdocs2md] ${blockToken} 为空`)
+        }
         const text = await transformBlock(block, context);
         if(text){
           markdownString += text + '\n\n';
@@ -166,6 +183,9 @@ export class LarkDocs2Md {
       writeStream.write(`# ${docTitle}\n\n`);
       for(let blockToken of blocksList){
         const block = blocksMap.get(blockToken);
+        if(!block){
+          console.log(`[larkdocs2md] ${blockToken} 为空`)
+        }
         const text = await transformBlock(block, context);
         if(text){
           writeStream.write(text + '\n\n')
