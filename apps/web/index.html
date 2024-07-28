@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LarkDocs2Md</title>
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .container {
+      width: 100%;
+      height: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .title {
+      text-align: center;
+    }
+
+    .form {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #targetUrl {
+      width: 50%;
+      max-width: 600px;
+      padding: 4px 16px;
+      height: 32px;
+      outline: none;
+      border: 1px solid #dcdcdc;
+      border-radius: 6px;
+      transition: width, max-width .1s;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    #targetUrl:hover {
+      border-color: #3644ff;
+    }
+
+    #targetUrl:focus {
+      border-color: #3644ff;
+      width: 80%;
+      max-width: 800px;
+    }
+
+    #targetUrl.right {
+      border-color: #589083;
+    }
+
+    #targetUrl.error {
+      border-color: #e62100;
+    }
+
+    #export {
+      margin-top: 8px;
+      border: 0;
+      border-radius: 6px;
+      padding: 14px 24px;
+      cursor: pointer;
+      font-size: 18px;
+      color: white;
+      background-color: #3643fff0;
+      transition: background-color .3s;
+    }
+
+    #export.disable {
+      cursor: not-allowed;
+      background-color: #dee1e6 !important;
+      color: gray !important;
+    }
+
+    #export:hover {
+      border: 0;
+      border-radius: 6px;
+      background-color: #3a44d6;
+    }
+
+    #message {
+      max-width: 80%;
+      word-break: break-all;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>LarkDocs2Md</h1>
+      <p>Export Lark/feishu documents as markdown documents</p>
+      <p>TIPS: set the permission of the document as "Anyone can view".</p>
+    </div>
+    <input id="targetUrl" placeholder="paste the url here" />
+    <button id="export" class="disable">Export</button>
+    <span id="message"></span>
+  </div>
+  <script>
+    const input = document.getElementById('targetUrl');
+    const button = document.getElementById('export');
+    const message = document.getElementById('message');
+
+    const updateFormStatus = (valid = false) => {
+      if (valid) {
+        input.classList.add('right');
+        input.classList.remove('error');
+        button.classList.remove('disable');
+        message.innerText = "";
+      } else {
+        input.classList.add('error');
+        button.classList.add('disable');
+        input.classList.remove('right');
+        message.innerText = input.value ? "Invalid document url, please check again." : "";
+      }
+    }
+
+    const isValidUrl = (url) => {
+      const isNormal = /^https?:\/\/(?:[-\w.]|(?:%[\da-fA-F]{2}))+/.test(url);
+      const isFeishuDocs = url.includes('feishu.cn/docx/');
+      const isLarkDocs = url.includes('larksuite.com/docx/');
+      return isNormal && (isFeishuDocs || isLarkDocs);
+    }
+
+
+    const polling = (executor) => {
+      let timeout = 1000;
+      const maxTry = 15;
+      let count = 0;
+      return new Promise((resolve, reject) => {
+        const fn = () => {
+          console.log("polling ", timeout)
+          setTimeout(async () => {
+            try {
+              const isDone = await executor();
+              console.log("isDone", isDone)
+              if (!isDone) {
+                timeout = Math.floor(timeout * 1.2);
+                count++;
+                if (count > maxTry) {
+                  reject("max try");
+                }
+                fn();
+              } else {
+                resolve();
+              }
+            } catch (err) {
+              reject("execute error");
+            }
+          }, timeout)
+        }
+        fn();
+      })
+    }
+
+    let valid = false;
+    const onInputChange = function (e) {
+      const url = e.target.value;
+      valid = isValidUrl(url);
+      updateFormStatus(valid);
+    }
+
+    let loading = false;
+    const onButtonClick = async function (e) {
+      if (loading || !valid) return;
+      button.classList.add('disable')
+      button.innerText = "Loading...";
+      message.innerText = "Task submit! Wait a few seconds.";
+      loading = true;
+      const waitTaskDone = async () => {
+        const response = await fetch('http://localhost:3000/export?url=' + input.value);
+        const body = await response.json();
+        if (body.status === 1) {
+          const link = `http://localhost:3000/download?url=${input.value}`;
+          window.open(link, '_blank');
+          message.innerText = "Task Success! Download link: " + link;
+          return true;
+        } else if (body.status === -1) {
+          message.innerText = "Task Fail! You can try later.";
+          return true;
+        }
+        return false;
+      }
+      await polling(waitTaskDone)
+
+      loading = false;
+      button.innerText = "Export";
+      button.classList.remove('disable')
+
+    }
+
+    input.addEventListener('input', onInputChange);
+    button.addEventListener('click', onButtonClick);
+  </script>
+</body>
+
+</html>
